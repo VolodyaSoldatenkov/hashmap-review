@@ -136,10 +136,11 @@ public:
         return *this;
     }
 
-    template<typename Iter>
-    HashMap(Iter begin, Iter end, Hash hash = Hash()) : HashMap(hash) {
-        while (begin != end)
+    template<typename IIter>
+    HashMap(IIter begin, IIter end, Hash hash = Hash()) : HashMap(hash) {
+        while (begin != end) {
             insert(*begin++);
+        }
     }
 
     HashMap(std::initializer_list<StoredType> init, Hash hash = Hash()) : HashMap(init.begin(), init.end(), hash) {}
@@ -173,12 +174,14 @@ public:
     }
 
     std::pair<iterator, bool> insert(StoredType in) {
-        if (loadFactor() > maxLoadFactor)
+        if (loadFactor() > maxLoadFactor) {
             rehash();
+        }
         size_t index = indexOf(in.first);
         for (auto it = mData[index].begin(); it != mData[index].end(); ++it) {
-            if (it->first == in.first)
+            if (it->first == in.first) {
                 return {iterator(mData.begin() + index, mData.end(), it), false};
+            }
         }
         auto pos = mData[index].insert(mData[index].end(), std::move(in));
         ++mSize;
@@ -199,8 +202,9 @@ public:
     iterator find(const Key& key) {
         size_t index = indexOf(key);
         for (auto it = mData[index].begin(); it != mData[index].end(); ++it) {
-            if (it->first == key)
+            if (it->first == key) {
                 return iterator(mData.begin() + index, mData.end(), it);
+            }
         }
         return end();
     }
@@ -208,8 +212,9 @@ public:
     const_iterator find(const Key& key) const {
         size_t index = indexOf(key);
         for (auto it = mData[index].begin(); it != mData[index].end(); ++it) {
-            if (it->first == key)
+            if (it->first == key) {
                 return const_iterator(mData.begin() + index, mData.end(), it);
+            }
         }
         return end();
     }
@@ -221,15 +226,17 @@ public:
     const Value& at(const Key& key) const {
         size_t index = indexOf(key);
         for (auto it = mData[index].begin(); it != mData[index].end(); ++it) {
-            if (it->first == key)
+            if (it->first == key) {
                 return it->second;
+            }
         }
         throw std::out_of_range("");
     }
 
     void clear() {
-        for (auto& bucket : mData)
+        for (auto& bucket : mData) {
             bucket.clear();
+        }
         mSize = 0;
     }
 
