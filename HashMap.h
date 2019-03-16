@@ -52,7 +52,7 @@ public:
 
     HashMap(const HashMap& rhs) : mData(rhs.mData), mHash(rhs.mHash), mSize(rhs.mSize) {}
 
-    HashMap(HashMap&& rhs) noexcept(std::is_nothrow_move_constructible_v<Hash>) :
+    HashMap(HashMap&& rhs) noexcept :
             mData(std::move(rhs.mData)),
             mHash(std::move(rhs.mHash)),
             mSize(rhs.mSize) {}
@@ -63,12 +63,9 @@ public:
     }
 
     template<typename Iter>
-    HashMap(Iter begin, Iter end, Hash hash = Hash()) : mHash(hash), mSize(std::distance(begin, end)) {
-        mData.resize(mSize * 2 ?: 1);
-        while (begin != end) {
-            size_t index = indexOf(begin->first);
-            mData[index].push_back(*begin++);
-        }
+    HashMap(Iter begin, Iter end, Hash hash = Hash()) : HashMap(hash) {
+        while (begin != end)
+            insert(*begin++);
     }
 
     HashMap(std::initializer_list<StoredType> init, Hash hash = Hash()) : HashMap(init.begin(), init.end(), hash) {}
