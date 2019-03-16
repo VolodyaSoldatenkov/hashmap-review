@@ -300,3 +300,8 @@ public:
         std::swap(mSize, rhs.mSize);
     }
 };
+
+template<typename K, typename V, typename H>
+void swap(HashMap<K, V, H>& lhs, HashMap<K, V, H>& rhs) {
+    lhs.swap(rhs);
+}
