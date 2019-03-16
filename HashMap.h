@@ -17,8 +17,77 @@ private:
     using Bucket = std::list<StoredType>;
     using BucketIterator = typename std::vector<Bucket>::iterator;
     using BucketConstIterator = typename std::vector<Bucket>::const_iterator;
-    
+
+    template<typename BIter, typename SIter>
+    class iterator_impl {
+        friend class HashMap;
+
+    private:
+        BIter mBucket;
+        BIter mBucketEnd;
+        SIter mStored;
+
+        explicit iterator_impl(BIter bucket,
+                               BIter bucketEnd,
+                               SIter stored = SIter()) :
+                mBucket(bucket),
+                mBucketEnd(bucketEnd),
+                mStored(stored) {
+            while (mStored == mBucket->end()) {
+                if (++mBucket == mBucketEnd) {
+                    mStored = SIter();
+                    return;
+                }
+                mStored = mBucket->begin();
+            }
+        }
+
+    public:
+        using iterator_category = std::forward_iterator_tag;
+        using value_type = typename SIter::value_type;
+        using difference_type = ptrdiff_t;
+        using pointer = typename SIter::pointer;
+        using reference = typename SIter::reference;
+
+        iterator_impl() = default;
+
+        reference operator*() const {
+            return *mStored;
+        }
+
+        pointer const operator->() const {
+            return mStored.operator->();
+        }
+
+        iterator_impl& operator++() {
+            ++mStored;
+            while (mStored == mBucket->end()) {
+                if (++mBucket == mBucketEnd) {
+                    mStored = StoredIterator();
+                    return *this;
+                }
+                mStored = mBucket->begin();
+            }
+            return *this;
+        }
+
+        iterator_impl operator++(int) {
+            iterator old = *this;
+            ++*this;
+            return old;
+        }
+
+        friend bool operator==(const iterator_impl& lhs, const iterator_impl& rhs) {
+            return lhs.mBucket == rhs.mBucket && lhs.mStored == rhs.mStored;
+        }
+
+        friend bool operator!=(const iterator_impl& lhs, const iterator_impl& rhs) {
+            return !(lhs == rhs);
+        }
+    };
+
     static constexpr double maxLoadFactor = 0.5;
+
 
     std::vector<Bucket> mData;
     Hash mHash;
@@ -50,6 +119,9 @@ private:
     }
 
 public:
+    using iterator = iterator_impl<BucketIterator, StoredIterator>;
+    using const_iterator = iterator_impl<BucketConstIterator, StoredConstIterator>;
+
     explicit HashMap(Hash hash = Hash()) : mData(1), mHash(hash), mSize(0) {}
 
     HashMap(const HashMap& rhs) : mData(rhs.mData), mHash(rhs.mHash), mSize(rhs.mSize) {}
@@ -58,7 +130,7 @@ public:
             mData(std::move(rhs.mData)),
             mHash(std::move(rhs.mHash)),
             mSize(rhs.mSize) {}
-            
+
     HashMap& operator=(HashMap rhs) {
         swap(rhs);
         return *this;
@@ -83,128 +155,6 @@ public:
     Hash hash_function() const {
         return mHash;
     }
-
-    class iterator : public std::iterator<std::forward_iterator_tag, StoredType> {
-        friend class HashMap;
-
-    private:
-        BucketIterator mBucket;
-        BucketIterator mBucketEnd;
-        StoredIterator mStored;
-
-        explicit iterator(BucketIterator bucket,
-                          BucketIterator bucketEnd,
-                          StoredIterator stored = StoredIterator()) :
-                mBucket(bucket),
-                mBucketEnd(bucketEnd),
-                mStored(stored) {
-            while (mStored == mBucket->end()) {
-                if (++mBucket == mBucketEnd) {
-                    mStored = StoredIterator();
-                    return;
-                }
-                mStored = mBucket->begin();
-            }
-        }
-
-    public:
-        iterator() = default;
-
-        StoredType& operator*() const {
-            return *mStored;
-        }
-
-        StoredType* const operator->() const {
-            return mStored.operator->();
-        }
-
-        iterator& operator++() {
-            ++mStored;
-            while (mStored == mBucket->end()) {
-                if (++mBucket == mBucketEnd) {
-                    mStored = StoredIterator();
-                    return *this;
-                }
-                mStored = mBucket->begin();
-            }
-            return *this;
-        }
-
-        iterator operator++(int) {
-            iterator old = *this;
-            ++*this;
-            return old;
-        }
-
-        friend bool operator==(const iterator& lhs, const iterator& rhs) {
-            return lhs.mBucket == rhs.mBucket && lhs.mStored == rhs.mStored;
-        }
-
-        friend bool operator!=(const iterator& lhs, const iterator& rhs) {
-            return !(lhs == rhs);
-        }
-    };
-
-    class const_iterator : public std::iterator<std::forward_iterator_tag, const StoredType> {
-        friend class HashMap;
-
-    private:
-        BucketConstIterator mBucket;
-        BucketConstIterator mBucketEnd;
-        StoredConstIterator mStored;
-
-        explicit const_iterator(BucketConstIterator bucket,
-                                BucketConstIterator bucketEnd,
-                                StoredConstIterator stored = StoredConstIterator()) :
-                mBucket(bucket),
-                mBucketEnd(bucketEnd),
-                mStored(stored) {
-            while (mStored == mBucket->end()) {
-                if (++mBucket == mBucketEnd) {
-                    mStored = StoredIterator();
-                    return;
-                }
-                mStored = mBucket->begin();
-            }
-        }
-
-    public:
-        const_iterator() = default;
-
-        const StoredType& operator*() const {
-            return *mStored;
-        }
-
-        const StoredType* const operator->() const {
-            return mStored.operator->();
-        }
-
-        const_iterator& operator++() {
-            ++mStored;
-            while (mStored == mBucket->end()) {
-                if (++mBucket == mBucketEnd) {
-                    mStored = StoredIterator();
-                    return *this;
-                }
-                mStored = mBucket->begin();
-            }
-            return *this;
-        }
-
-        const_iterator operator++(int) {
-            const_iterator old = *this;
-            ++*this;
-            return old;
-        }
-
-        friend bool operator==(const const_iterator& lhs, const const_iterator& rhs) {
-            return lhs.mBucket == rhs.mBucket && lhs.mStored == rhs.mStored;
-        }
-
-        friend bool operator!=(const const_iterator& lhs, const const_iterator& rhs) {
-            return !(lhs == rhs);
-        }
-    };
 
     iterator begin() {
         return iterator(mData.begin(), mData.end(), mData.front().begin());
@@ -282,7 +232,7 @@ public:
             bucket.clear();
         mSize = 0;
     }
-    
+
     void swap(HashMap& rhs) noexcept(std::is_nothrow_swappable_v<Hash>) {
         std::swap(mHash, rhs.mHash);
         mData.swap(rhs.mData);
