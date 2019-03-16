@@ -72,7 +72,7 @@ private:
         }
 
         iterator_impl operator++(int) {
-            iterator old = *this;
+            iterator_impl old = *this;
             ++*this;
             return old;
         }
@@ -165,11 +165,11 @@ public:
     }
 
     const_iterator begin() const {
-        return const_iterator(mData.begin(), mData.end(), mData.front().begin());
+        return const_iterator(mData.cbegin(), mData.cend(), mData.front().cbegin());
     }
 
     const_iterator end() const {
-        return const_iterator(mData.end(), mData.end());
+        return const_iterator(mData.cend(), mData.cend());
     }
 
     std::pair<iterator, bool> insert(StoredType in) {
