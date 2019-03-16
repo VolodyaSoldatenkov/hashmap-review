@@ -17,6 +17,8 @@ private:
     using Bucket = std::list<StoredType>;
     using BucketIterator = typename std::vector<Bucket>::iterator;
     using BucketConstIterator = typename std::vector<Bucket>::const_iterator;
+    
+    static constexpr double maxLoadFactor = 0.5;
 
     std::vector<Bucket> mData;
     Hash mHash;
@@ -220,21 +222,8 @@ public:
         return const_iterator(mData.end(), mData.end());
     }
 
-    std::pair<iterator, bool> insert(const StoredType& in) {
-        if (loadFactor() > 0.5)
-            rehash();
-        size_t index = indexOf(in.first);
-        for (auto it = mData[index].begin(); it != mData[index].end(); ++it) {
-            if (it->first == in.first)
-                return {iterator(mData.begin() + index, mData.end(), it), false};
-        }
-        auto pos = mData[index].insert(mData[index].end(), in);
-        ++mSize;
-        return {iterator(mData.begin() + index, mData.end(), pos), true};
-    }
-
-    std::pair<iterator, bool> insert(StoredType&& in) {
-        if (loadFactor() > 0.5)
+    std::pair<iterator, bool> insert(StoredType in) {
+        if (loadFactor() > maxLoadFactor)
             rehash();
         size_t index = indexOf(in.first);
         for (auto it = mData[index].begin(); it != mData[index].end(); ++it) {
